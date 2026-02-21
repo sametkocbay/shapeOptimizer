@@ -1,0 +1,33 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  13                                    |
+|   \\  /    A nd           | Website:  www.openfoam.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      transportProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+//
+// Kinematic viscosity.
+//
+// Using a high viscosity (nu = 0.01 m²/s) so that the flow is laminar
+// and converges quickly during the optimisation loop.
+//
+//   Re = U * L / nu = 1 * 0.5 / 0.01 = 50   (laminar, stable)
+//
+// For realistic air simulations use nu ≈ 1.5e-5 m²/s and add a
+// turbulence model in turbulenceProperties.
+//
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+transportModel  Newtonian;
+
+nu              [0 2 -1 0 0 0 0] 0.01;
+
+// ************************************************************************* //

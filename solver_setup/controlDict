@@ -1,0 +1,81 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  13                                    |
+|   \\  /    A nd           | Website:  www.openfoam.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+application     pisoFoam;
+
+startFrom       startTime;
+startTime       0;
+
+stopAt          endTime;
+endTime         1.0;            // short run for optimisation testing
+
+deltaT          0.005;          // CFL ≈ 0.25 for U=1 m/s, dx=0.02 m
+
+writeControl    timeStep;
+writeInterval   50;             // write every 0.25 s (4 snapshots total)
+purgeWrite      2;              // keep only 2 latest time directories
+
+writeFormat     ascii;
+writePrecision  6;
+writeCompression off;
+
+timeFormat      general;
+timePrecision   6;
+
+runTimeModifiable true;
+
+// ── Force function object ───────────────────────────────────────────────────
+// Computes pressure + viscous forces on the voxelShape patch.
+// Results go to  postProcessing/forces/0/
+functions
+{
+    forces
+    {
+        type            forces;
+        libs            ("libforces.so");
+        writeControl    timeStep;
+        writeInterval   1;
+
+        patches         ("voxelShape.*");   // regex: catches any SHM sub-patches
+        rho             rhoInf;
+        rhoInf          1.225;              // kg/m³ (air density)
+        CofR            (0.25 0.35 0.005);  // centre of voxel region
+        log             true;
+    }
+
+    forceCoeffs
+    {
+        type            forceCoeffs;
+        libs            ("libforces.so");
+        writeControl    timeStep;
+        writeInterval   1;
+
+        patches         ("voxelShape.*");
+        rho             rhoInf;
+        rhoInf          1.225;
+        CofR            (0.25 0.35 0.005);
+
+        liftDir         (0 1 0);
+        dragDir         (1 0 0);
+        pitchAxis       (0 0 1);
+        magUInf         1;
+        lRef            0.5;                // voxel region width
+        Aref            0.005;              // 0.5 m × 0.01 m (frontal area)
+        log             true;
+    }
+}
+
+// ************************************************************************* //

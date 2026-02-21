@@ -1,0 +1,134 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  13                                    |
+|   \\  /    A nd           | Website:  www.openfoam.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      snappyHexMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+//
+// Strategy for 2D (single-cell-in-Z) meshing:
+//   - castellatedMesh  = true   (remove cells inside the body)
+//   - snap             = false  (avoid face movement that can break 2D)
+//   - addLayers        = false
+//   - Refinement level = (0 0)  (no isotropic refinement → keeps 1 cell in Z)
+//
+// The base mesh (blockMesh) is already fine enough (~0.02 m cells) to
+// resolve the voxel geometry (~0.025 m voxels).
+//
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+castellatedMesh true;
+snap            false;
+addLayers       false;
+
+// ── Geometry ────────────────────────────────────────────────────────────────
+geometry
+{
+    voxelShape.stl
+    {
+        type triSurfaceMesh;
+        name voxelShape;
+    }
+}
+
+// ── Castellated-mesh controls ───────────────────────────────────────────────
+castellatedMeshControls
+{
+    maxLocalCells       100000;
+    maxGlobalCells      2000000;
+    minRefinementCells  0;
+    maxLoadUnbalance    0.10;
+    nCellsBetweenLevels 1;
+
+    features
+    (
+        // No feature-edge file needed at refinement level 0
+    );
+
+    refinementSurfaces
+    {
+        voxelShape
+        {
+            level (0 0);        // no refinement — castellate only
+        }
+    }
+
+    resolveFeatureAngle 30;
+
+    refinementRegions
+    {
+        // none
+    }
+
+    // !! Must be a point clearly INSIDE the fluid region,
+    //    NOT inside the solid body.
+    locationInMesh (-0.5 0.75 0.005);
+
+    allowFreeStandingZoneFaces true;
+}
+
+// ── Snap controls (disabled but required block) ─────────────────────────────
+snapControls
+{
+    nSmoothPatch            3;
+    tolerance               2.0;
+    nSolveIter              30;
+    nRelaxIter              5;
+    nFeatureSnapIter        10;
+    implicitFeatureSnap     false;
+    explicitFeatureSnap     true;
+    multiRegionFeatureSnap  false;
+}
+
+// ── Layer controls (disabled but required block) ────────────────────────────
+addLayersControls
+{
+    relativeSizes       true;
+    layers              {}
+    expansionRatio      1.0;
+    finalLayerThickness 0.3;
+    minThickness        0.1;
+    nGrowth             0;
+    featureAngle        60;
+    nRelaxIter          3;
+    nSmoothSurfaceNormals 1;
+    nSmoothNormals      3;
+    nSmoothThickness    10;
+    maxFaceThicknessRatio   0.5;
+    maxThicknessToMedialRatio 0.3;
+    minMedialAxisAngle  90;
+    nBufferCellsNoExtrude 0;
+    nLayerIter          50;
+}
+
+// ── Mesh quality ────────────────────────────────────────────────────────────
+meshQualityControls
+{
+    maxNonOrtho         65;
+    maxBoundarySkewness 20;
+    maxInternalSkewness 4;
+    maxConcave          80;
+    minVol              1e-13;
+    minTetQuality       -1e30;
+    minArea             -1;
+    minTwist            0.02;
+    minDeterminant      0.001;
+    minFaceWeight       0.05;
+    minVolRatio         0.01;
+    minTriangleTwist    -1;
+    nSmoothScale        4;
+    errorReduction      0.75;
+}
+
+debug       0;
+mergeTolerance 1e-6;
+
+// ************************************************************************* //

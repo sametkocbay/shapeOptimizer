@@ -1,0 +1,100 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  13                                    |
+|   \\  /    A nd           | Website:  www.openfoam.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      blockMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+//
+// Domain dimensions:
+//   x : -1.0 → 2.0  (3.0 m total — upstream + downstream of body)
+//   y :  0.0 → 1.5  (1.5 m — ground at y=0, freestream above)
+//   z :  0.0 → 0.01 (pseudo-2D — single cell layer)
+//
+// Base cell size ≈ 0.02 m  →  150 × 75 × 1 = 11 250 cells.
+// The voxel grid (0.025 m cells) does NOT align exactly with the mesh,
+// which prevents degenerate face-on-face issues in snappyHexMesh.
+//
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+scale   1;
+
+vertices
+(
+    (-1.0  0.0  0.0 )   // 0
+    ( 2.0  0.0  0.0 )   // 1
+    ( 2.0  1.5  0.0 )   // 2
+    (-1.0  1.5  0.0 )   // 3
+    (-1.0  0.0  0.01)   // 4
+    ( 2.0  0.0  0.01)   // 5
+    ( 2.0  1.5  0.01)   // 6
+    (-1.0  1.5  0.01)   // 7
+);
+
+blocks
+(
+    hex (0 1 2 3 4 5 6 7) (150 75 1) simpleGrading (1 1 1)
+);
+
+edges
+(
+);
+
+boundary
+(
+    inlet
+    {
+        type patch;
+        faces
+        (
+            (0 4 7 3)
+        );
+    }
+    outlet
+    {
+        type patch;
+        faces
+        (
+            (1 2 6 5)
+        );
+    }
+    bottom
+    {
+        type wall;
+        faces
+        (
+            (0 1 5 4)
+        );
+    }
+    top
+    {
+        type patch;
+        faces
+        (
+            (3 7 6 2)
+        );
+    }
+    frontAndBack
+    {
+        type empty;
+        faces
+        (
+            (0 3 2 1)
+            (4 5 6 7)
+        );
+    }
+);
+
+mergePatchPairs
+(
+);
+
+// ************************************************************************* //
